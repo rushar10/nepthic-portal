@@ -1,0 +1,45 @@
+{
+  "name": "nepthic-admin-portal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Nepthic Admin Portal: the one place staff manage Clothing, Wholesale and Events. Separate app on its own domain, with its own admin accounts (2FA), roles and audit log. Talks to each site only through that site's signed admin API.",
+  "scripts": {
+    "dev": "next dev -p 3003",
+    "build": "next build",
+    "start": "next start -p 3003",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "keys": "tsx scripts/keys.ts",
+    "admin:create": "tsx --env-file=.env scripts/create-super-admin.ts",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "db:seed-dev": "tsx --env-file=.env scripts/seed-dev.ts"
+  },
+  "dependencies": {
+    "@fontsource/instrument-sans": "5.2.8",
+    "@fontsource/jetbrains-mono": "5.2.8",
+    "@fontsource/unbounded": "5.2.8",
+    "bcryptjs": "3.0.3",
+    "drizzle-orm": "0.44.7",
+    "jose": "5.10.0",
+    "jsqr": "1.4.0",
+    "next": "15.5.27",
+    "pg": "8.16.3",
+    "qrcode": "1.5.4",
+    "react": "19.1.9",
+    "react-dom": "19.1.9"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.3",
+    "@types/pg": "8.15.5",
+    "@types/qrcode": "1.5.5",
+    "@types/react": "19.1.17",
+    "@types/react-dom": "19.1.11",
+    "drizzle-kit": "0.31.4",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=20.9"
+  }
+}

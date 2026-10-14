@@ -1,0 +1,69 @@
+/* ── Nepthic Admin Portal additions on top of the shared admin theme ── */
+
+/* Each site's section takes on that site's accent, so it's always clear which site you're managing. */
+.site-adm:has(.scope[data-site="clothing"]) { --accent: #F5A524; --accent-strong: #A35F00; --link: var(--clo-ink); --glow-a: #F5A524; --glow-b: #8B5CF6; --site: var(--clo); }
+.site-adm:has(.scope[data-site="wholesale"]) { --accent: #2DD4BF; --accent-strong: #0F766E; --link: var(--ws-ink); --glow-a: #2DD4BF; --glow-b: #8B5CF6; --site: var(--ws); }
+.site-adm:has(.scope[data-site="events"]) { --accent: #EC4899; --accent-strong: #BE185D; --link: var(--ev-ink); --glow-a: #EC4899; --glow-b: #8B5CF6; --site: var(--ev); }
+.site-adm:has(.scope[data-site]) .rail-item[aria-current="page"] { box-shadow: 0 8px 22px -6px color-mix(in oklab, var(--accent) 70%, transparent); }
+.scope { display: contents; }
+
+/* site switcher: Overview · Clothing · Wholesale · Events */
+.switcher { display: flex; gap: 6px; padding: 5px; border-radius: 999px; background: var(--raised); border: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; margin-inline: auto; max-width: 100%; }
+.switcher::-webkit-scrollbar { display: none; }
+.switcher a { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px; border-radius: 999px; white-space: nowrap; color: var(--muted); text-decoration: none; font-weight: 700; font-size: .9rem; transition: background-color .15s ease, color .15s ease; }
+.switcher a:hover { color: var(--fg); background: var(--hover); }
+.switcher a i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); box-shadow: 0 0 10px var(--c); }
+.switcher a[aria-current="page"] { color: #fff; background: var(--c-strong, var(--accent-strong)); }
+.switcher a[aria-current="page"] i { background: #fff; box-shadow: none; }
+.switcher .n { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; display: grid; place-items: center; font-size: .7rem; background: color-mix(in oklab, var(--warn) 25%, transparent); color: var(--warn); }
+.switcher a[aria-current="page"] .n { background: rgb(255 255 255 / .25); color: #fff; }
+.mob-switcher { display: none; }
+@media (max-width: 760px) {
+  .adm-top .switcher { display: none; }
+  .mob-switcher { display: flex; margin: 0 0 4px; }
+}
+
+/* section heading with the site's dot and "View live site" */
+.sec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.sec-head .who { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; color: var(--muted); font-size: .9rem; }
+.sec-head .who i { width: 10px; height: 10px; border-radius: 50%; background: var(--site, var(--accent)); box-shadow: 0 0 12px var(--site, var(--accent)); }
+.live-btn { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid color-mix(in oklab, var(--accent) 45%, var(--line)); color: var(--fg); text-decoration: none; font-weight: 700; font-size: .88rem; background: color-mix(in oklab, var(--accent) 12%, var(--raised)); }
+.live-btn:hover { background: color-mix(in oklab, var(--accent) 22%, var(--raised)); }
+
+.site-problem { border-color: color-mix(in oklab, var(--c, var(--warn)) 40%, var(--line)); }
+.confirm-2fa input { max-width: 200px; font-family: var(--f-mono); letter-spacing: .2em; }
+.confirm-ok { color: var(--ok); }
+.role-pill { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 999px; font-size: .74rem; font-weight: 800; background: var(--raised); color: var(--muted); }
+.role-pill.SUPER { background: color-mix(in oklab, #8B5CF6 22%, transparent); color: var(--link); }
+.site-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+
+/* overview cards per site */
+.ov-sites { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 20px; }
+.ov-site { border-top: 3px solid var(--c); }
+.ov-site .kv2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.ov-site .kv2 div { display: grid; gap: 2px; }
+.ov-site .kv2 span { font-size: .78rem; color: var(--muted); font-weight: 600; }
+.ov-site .kv2 b { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.ov-site .go { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--c); text-decoration: none; }
+
+/* login */
+.auth-wrap { min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; }
+.auth-card { width: min(440px, 100%); display: grid; gap: 18px; padding: 28px; border-radius: 28px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.auth-card .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: .2em; }
+.auth-card .brand .mark { width: 38px; height: 38px; border-radius: 12px; background: var(--grad); display: grid; place-items: center; color: #fff; letter-spacing: 0; }
+.auth-card h1 { font-family: var(--f-body); font-size: 1.5rem; font-weight: 700; letter-spacing: -.01em; }
+.auth-card .code-input { font-family: var(--f-mono); font-size: 1.5rem; letter-spacing: .4em; text-align: center; }
+.qr { display: grid; place-items: center; padding: 14px; background: #fff; border-radius: 18px; width: fit-content; margin-inline: auto; }
+.qr img { width: 196px; height: 196px; image-rendering: pixelated; }
+.secret { font-family: var(--f-mono); font-size: .9rem; letter-spacing: .12em; word-break: break-all; text-align: center; padding: 10px; border-radius: 12px; background: var(--raised); }
+.steps-mini { display: flex; gap: 6px; } .steps-mini i { height: 4px; flex: 1; border-radius: 4px; background: var(--line-strong); } .steps-mini i.on { background: var(--accent); }
+
+/* tables in the admin and audit screens */
+.audit-tbl td { vertical-align: top; }
+.outcome-ok { color: var(--ok); } .outcome-denied { color: var(--warn); } .outcome-failed { color: var(--bad); }
+.temp-pw { font-family: var(--f-mono); font-size: 1.05rem; padding: 10px 14px; border-radius: 12px; background: var(--raised); user-select: all; }
+.cards-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px; }
+
+/* The shell always spans the page (body is a grid in the shared styles, which would otherwise
+   shrink it to its content on light pages like the overview). */
+.adm-shell, .adm-top { width: 100%; box-sizing: border-box; }

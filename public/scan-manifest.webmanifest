@@ -1,0 +1,1 @@
+{ "name": "Nepthic Scanner", "short_name": "Scanner", "start_url": "/scan", "scope": "/scan", "display": "standalone", "background_color": "#0E0B14", "theme_color": "#0E0B14", "icons": [{ "src": "/icon.png", "sizes": "512x512", "type": "image/png" }] }

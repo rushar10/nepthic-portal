@@ -1,0 +1,18 @@
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+import * as schema from "./schema";
+
+const g = globalThis as unknown as { nepthicPortalPool?: Pool };
+
+if (!process.env.DATABASE_URL && process.env.NEXT_PHASE !== "phase-production-build") {
+  throw new Error("DATABASE_URL is not set. Copy .env.example to .env in this project and fill it in.");
+}
+
+const pool = g.nepthicPortalPool ?? new Pool({ connectionString: process.env.DATABASE_URL, max: 10 });
+if (process.env.NODE_ENV !== "production") g.nepthicPortalPool = pool;
+
+export const db: NodePgDatabase<typeof schema> = drizzle(pool, { schema });
+
+export * from "./schema";
+export { schema, pool };
+export { and, asc, desc, eq, gt, gte, inArray, isNull, isNotNull, lt, lte, ne, or, sql, count, ilike } from "drizzle-orm";
