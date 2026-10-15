@@ -36,6 +36,9 @@ const P: Record<string, string> = {
   "wifi-off": "M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 13a10 10 0 0 1 5-2.6M19 13a10 10 0 0 0-2.5-1.9M2 9a15 15 0 0 1 4-2.6M22 9a15 15 0 0 0-11-4M12 20h.01",
   info: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v5M12 8h.01",
   history: "M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2",
+  /** A shop front: partners are outlets (record stores, venues, promoters) that sell tickets. */
+  store: "M3 9l2-5h14l2 5M3 9h18v1.5a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0zM5 13v8h14v-8M10 21v-5h4v5",
+  pie: "M12 3a9 9 0 1 0 9 9h-9zM15 2.5a7 7 0 0 1 6.5 6.5H15z",
   layers: "M12 3 2 8l10 5 10-5zM2 13l10 5 10-5M2 18l10 5 10-5",
 };
 
