@@ -107,13 +107,24 @@ body.site-adm {
 
 /* ── shell + floating icon rail ──────────────────────────────────────── */
 .adm-shell { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 22px; max-width: 1600px; margin-inline: auto; padding-inline: clamp(16px, 3vw, 28px); padding-block: 8px 48px; }
-.adm-rail {
-  /* z-index: the rail's hover labels must sit above the page content (cards and chips create
-     their own layers for the glow); still below the sticky top bar (30). */
-  position: sticky; top: 92px; z-index: 20; align-self: start; display: flex; flex-direction: column; align-items: center; gap: 6px;
-  padding: 12px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow);
-  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+.adm-rail-col {
+  /* z-index: the rail's labels must sit above the page content (cards and chips create their
+     own layers for the glow); still below the sticky top bar (30). */
+  position: sticky; top: 92px; z-index: 20; align-self: start;
 }
+.adm-rail {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 12px 10px; border-radius: 38px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  /* Long sections scroll inside the rail, so every item is reachable on short windows. */
+  max-height: calc(100dvh - 92px - 16px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none;
+}
+.adm-rail::-webkit-scrollbar { display: none; }
+.adm-rail > * { flex: none; }
+/* Fade at an edge that has more items beyond it */
+.adm-rail.more-down { -webkit-mask-image: linear-gradient(#000 calc(100% - 46px), transparent); mask-image: linear-gradient(#000 calc(100% - 46px), transparent); }
+.adm-rail.more-up { -webkit-mask-image: linear-gradient(transparent, #000 46px); mask-image: linear-gradient(transparent, #000 46px); }
+.adm-rail.more-up.more-down { -webkit-mask-image: linear-gradient(transparent, #000 46px, #000 calc(100% - 46px), transparent); mask-image: linear-gradient(transparent, #000 46px, #000 calc(100% - 46px), transparent); }
 .adm-rail hr { width: 26px; border: 0; border-top: 1px solid var(--line-strong); margin: 6px 0; }
 .rail-item {
   position: relative; width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center;
@@ -124,12 +135,18 @@ body.site-adm {
 .rail-item[aria-current="page"] { background: var(--accent-strong); color: #fff; box-shadow: 0 8px 22px -6px rgb(139 92 246 / .7); }
 .rail-item .rail-badge { position: absolute; top: 4px; right: 2px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px; background: var(--ev); color: #fff; font-size: .68rem; font-weight: 800; display: grid; place-items: center; font-variant-numeric: tabular-nums; }
 .rail-tip {
-  position: absolute; left: calc(100% + 14px); top: 50%; transform: translate(-4px, -50%); opacity: 0; pointer-events: none;
+  position: absolute; left: calc(100% + 14px); top: 0; transform: translateY(-50%); pointer-events: none;
   padding: 6px 10px; border-radius: 10px; background: var(--fg); color: var(--bg); font-size: .8rem; font-weight: 700; white-space: nowrap;
-  transition: opacity .15s ease, transform .15s ease; z-index: 5;
+  z-index: 5; animation: rail-tip-in .15s ease;
 }
-.rail-item:hover .rail-tip, .rail-item:focus-visible .rail-tip { opacity: 1; transform: translate(0, -50%); }
+@keyframes rail-tip-in { from { opacity: 0; transform: translate(-4px, -50%); } }
 .rail-spacer { height: 18px; }
+@media (max-height: 760px) {
+  .adm-rail { gap: 2px; padding: 10px 8px; }
+  .adm-rail .rail-item { width: 46px; height: 46px; }
+  .adm-rail hr { margin: 3px 0; }
+  .rail-spacer { height: 8px; }
+}
 .adm-page { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; align-content: start; }
 
 /* section sub-navigation (Wholesale, Events) */
@@ -294,7 +311,7 @@ body.site-adm {
 /* phone: one column, bottom bar instead of the rail, approvals near the top */
 @media (max-width: 760px) {
   .adm-shell { grid-template-columns: minmax(0, 1fr); padding-bottom: calc(var(--nav-h, 64px) + 40px + env(safe-area-inset-bottom, 0px)); }
-  .adm-rail { display: none; }
+  .adm-rail-col { display: none; }
   .adm-top { gap: 8px; }
   .adm-search { display: none; }
   .hello .hi { display: none; }
@@ -327,6 +344,6 @@ body.site-adm {
 
 /* app-like navigation: the rail and top bar stay put while the page changes */
 .adm-top { view-transition-name: site-header; }
-.adm-rail { view-transition-name: admin-rail; }
+.adm-rail-col { view-transition-name: admin-rail; }
 ::view-transition-old(admin-rail), ::view-transition-new(admin-rail) { animation: none; }
 .adm-page > .ptr { display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr); align-content: start; }

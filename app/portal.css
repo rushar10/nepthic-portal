@@ -18,10 +18,26 @@
 .switcher .n { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; display: grid; place-items: center; font-size: .7rem; background: color-mix(in oklab, var(--warn) 25%, transparent); color: var(--warn); }
 .switcher a[aria-current="page"] .n { background: rgb(255 255 255 / .25); color: #fff; }
 .mob-switcher { display: none; }
+/* In the top bar the switcher shares the row with the actions: let it shrink (and scroll
+   sideways) instead of sliding under the bell and avatar. */
+.adm-top .switcher { flex: 0 1 auto; min-width: 0; }
+@media (max-width: 1100px) {
+  .adm-top .hello .hi { display: none; }
+  .adm-top .switcher a { padding: 0 12px; gap: 6px; }
+}
+@media (max-width: 900px) {
+  .adm-logo .tag { display: none; }
+  .adm-top .switcher a { padding: 0 10px; font-size: .84rem; }
+}
+/* Phones: the switcher gets its own row and all four sites fit side by side. */
 @media (max-width: 760px) {
   .adm-top .switcher { display: none; }
-  .mob-switcher { display: flex; margin: 0 0 4px; }
+  .mob-switcher { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); margin: 0 0 4px; overflow: visible; width: 100%; gap: 4px; }
+  .mob-switcher a { justify-content: center; padding: 0 6px; gap: 5px; font-size: .8rem; min-width: 0; }
+  .mob-switcher a i { width: 7px; height: 7px; flex: none; }
+  .mob-switcher .n { min-width: 17px; height: 17px; padding: 0 4px; font-size: .64rem; }
 }
+@media (max-width: 360px) { .mob-switcher a i { display: none; } }
 
 /* section heading with the site's dot and "View live site" */
 .sec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
@@ -133,7 +149,7 @@
 
 /* Door scans */
 .scan-events { display: grid; gap: 8px; }
-.scan-events .chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.scan-events .chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; overflow: visible; }
 .scan-events-label { min-width: 84px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; font-size: 11px; }
 .scan-stats { display: flex; gap: 28px; flex-wrap: wrap; }
 .scan-stats > div { display: grid; }
@@ -148,3 +164,6 @@
 .scan-filters { grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); }
 .scan-log .mono { font-family: var(--f-mono, ui-monospace, monospace); font-size: 13px; }
 .nowrap { white-space: nowrap; }
+/* The shared .chips row bleeds to the window edge on the customer sites; inside the portal's
+   padded page that pushed the page sideways. Keep it within the page here. */
+.adm-page .chips { margin-inline: 0; padding-inline: 0; max-width: 100%; }
