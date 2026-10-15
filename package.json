@@ -12,6 +12,7 @@
     "db:migrate": "drizzle-kit migrate",
     "keys": "tsx scripts/keys.ts",
     "admin:create": "tsx --env-file=.env scripts/create-super-admin.ts",
+    "admin:reset-password": "tsx --env-file=.env scripts/reset-password.ts",
     "test": "node --import tsx --test tests/*.test.ts",
     "db:seed-dev": "tsx --env-file=.env scripts/seed-dev.ts"
   },

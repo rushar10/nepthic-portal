@@ -86,6 +86,7 @@ Their 2FA secrets are in `.dev-accounts.json`; add one to an authenticator app t
 | `npm run build` / `npm start` | Production build and server (port 3003) |
 | `npm run keys` | New signing key pair and encryption key |
 | `npm run admin:create -- "Name" email` | First Super Admin (prints a temporary password, shown once) |
+| `npm run admin:reset-password -- email [--reset-2fa]` | Reset a forgotten password from the command line (prints a temporary one, unlocks, signs out everywhere) |
 | `npm run db:seed-dev` | Development accounts for every role (refuses in production) |
 | `npm test` | Unit tests: 2FA codes, roles, IP allowlist, form parsing |
 | `npm run typecheck` | TypeScript |
