@@ -11,7 +11,7 @@ const createdAt = () => ts("created_at").notNull().defaultNow();
 
 /** SUPER: everything · SITE_ADMIN: everything on assigned sites · STAFF: day-to-day work on
     assigned sites · DOOR: the Events ticket scanner only (no portal screens). */
-export const adminRole = pgEnum("admin_role", ["SUPER", "SITE_ADMIN", "STAFF", "DOOR"]);
+export const adminRole = pgEnum("admin_role", ["SUPER", "SITE_ADMIN", "STAFF", "DOOR", "PARTNER"]);
 export type AdminRole = (typeof adminRole.enumValues)[number];
 
 export const admins = pgTable("admins", {
@@ -22,6 +22,8 @@ export const admins = pgTable("admins", {
   role: adminRole("role").notNull(),
   /** Sites this account may manage: "clothing", "wholesale", "events". Ignored for SUPER. */
   sites: text("sites").array().notNull().default([]),
+  /** PARTNER accounts only: the Events partner code they belong to (e.g. P012). */
+  partnerCode: text("partner_code"),
   /** TOTP secret, AES-256-GCM encrypted with PORTAL_ENCRYPTION_KEY. */
   totpSecret: text("totp_secret"),
   totpConfirmedAt: ts("totp_confirmed_at"),

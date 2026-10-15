@@ -1,3 +1,4 @@
+import { env } from "@/core/env";
 import { admins, asc, db } from "@/db";
 import { recentlyConfirmed, requireSuper } from "@/core/auth";
 import { ROLE_LABEL } from "@/core/perms";
@@ -13,6 +14,7 @@ const ROLE_HELP = [
   ["Site Admin", "Everything on the site(s) they're assigned to: approvals, refunds, payments, pricing, settings."],
   ["Staff", "Day-to-day work on assigned sites: answer quotes, process orders, edit stock. No settings, payments, approvals or refunds."],
   ["Door / scanner staff", "Only the Events ticket scanner (admin.nepthic.com/scan). No portal screens."],
+  ["Events partner", "A reseller, outlet or promoter. Only their own Partner page: their allocations, sold and remaining tickets, marking tickets sold and issuing e-tickets. Never another partner's data."],
 ];
 
 export default async function Admins() {
@@ -37,7 +39,7 @@ export default async function Admins() {
                 <tr key={a.id}>
                   <td><b>{a.name}</b>{a.id === me.id && <span className="small dim"> (you)</span>}<div className="small dim">{a.email}</div></td>
                   <td data-label="Role"><span className={`role-pill ${a.role}`}>{ROLE_LABEL[a.role]}</span></td>
-                  <td data-label="Sites" className="small">{a.role === "SUPER" ? "All sites" : a.sites.map((s) => <span key={s} style={{ marginRight: 8, whiteSpace: "nowrap" }}><i className="site-dot" style={{ background: SITES[s as SiteKey]?.accent }} />{SITES[s as SiteKey]?.short ?? s}</span>)}</td>
+                  <td data-label="Sites" className="small">{a.role === "SUPER" ? "All sites" : a.role === "PARTNER" ? <>Events partner <span className="mono">{a.partnerCode}</span></> : a.sites.map((s) => <span key={s} style={{ marginRight: 8, whiteSpace: "nowrap" }}><i className="site-dot" style={{ background: SITES[s as SiteKey]?.accent }} />{SITES[s as SiteKey]?.short ?? s}</span>)}</td>
                   <td data-label="2FA">{a.totpConfirmedAt ? <span className="pill ok">On</span> : <span className="pill warn">Set up at next sign-in</span>}</td>
                   <td data-label="Last sign-in" className="small">{a.lastLoginAt ? `${dateShort(a.lastLoginAt)} ${time(a.lastLoginAt)}` : "Never"}</td>
                   <td data-label="Status">{a.disabledAt ? <span className="pill bad">Removed</span> : locked ? <span className="pill warn">Locked</span> : a.mustChangePassword ? <span className="pill info">Temporary password</span> : <span className="pill ok">Active</span>}</td>
@@ -45,15 +47,16 @@ export default async function Admins() {
                     {a.id !== me.id && (
                       <details><summary className="small" style={{ cursor: "pointer" }}>Manage</summary>
                         <div className="stack-sm" style={{ marginTop: 10, minWidth: 260 }}>
-                          <AccountForm action={changeAccess} confirmed={confirmed}>
+                          <AccountForm action={changeAccess} confirmed={confirmed} twoFactor={env.require2fa}>
                             <input type="hidden" name="id" value={a.id} />
-                            <label className="f">Role<select name="role" defaultValue={a.role}>{(["SUPER", "SITE_ADMIN", "STAFF", "DOOR"] as const).map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</select></label>
+                            <label className="f">Role<select name="role" defaultValue={a.role}>{(["SUPER", "SITE_ADMIN", "STAFF", "DOOR", "PARTNER"] as const).map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</select></label>
+                            <label className="f">Partner code <span className="dim small">(Events partner logins only)</span><input type="text" name="partnerCode" defaultValue={a.partnerCode ?? ""} placeholder="e.g. P012" /></label>
                             <fieldset className="row small" style={{ border: 0, padding: 0 }}><legend className="small dim">Sites (Site Admin and Staff)</legend>
                               {SITE_KEYS.map((s) => <label key={s} className="row small"><input type="checkbox" name="sites" value={s} defaultChecked={a.sites.includes(s)} /> {SITES[s].short}</label>)}
                             </fieldset>
                             <button className="btn btn-sm" type="submit">Save access</button>
                           </AccountForm>
-                          <AccountForm action={accountAction} confirmed={confirmed}>
+                          <AccountForm action={accountAction} confirmed={confirmed} twoFactor={env.require2fa}>
                             <input type="hidden" name="id" value={a.id} />
                             <div className="row">
                               <button className="btn btn-sm" name="do" value="reset-password">Reset password</button>
@@ -75,11 +78,12 @@ export default async function Admins() {
 
       <section className="panel prox">
         <h2 className="h3">Add an admin</h2>
-        <AccountForm action={createAccount} confirmed={confirmed}>
+        <AccountForm action={createAccount} confirmed={confirmed} twoFactor={env.require2fa}>
           <div className="form-grid">
             <label className="f">Name<input type="text" name="name" required autoComplete="off" /></label>
             <label className="f">Work email<input type="email" name="email" required autoComplete="off" /></label>
-            <label className="f">Role<select name="role" defaultValue="STAFF">{(["SITE_ADMIN", "STAFF", "DOOR", "SUPER"] as const).map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</select></label>
+            <label className="f">Role<select name="role" defaultValue="STAFF">{(["SITE_ADMIN", "STAFF", "DOOR", "PARTNER", "SUPER"] as const).map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</select></label>
+            <label className="f">Partner code <span className="dim small">(Events partner logins only)</span><input type="text" name="partnerCode" placeholder="e.g. P012" /></label>
           </div>
           <fieldset className="row" style={{ border: 0, padding: 0 }}><legend className="small dim">Sites they manage (ignored for Super Admin; Door staff are Events only)</legend>
             {SITE_KEYS.map((s) => <label key={s} className="row small"><input type="checkbox" name="sites" value={s} /> <i className="site-dot" style={{ background: SITES[s].accent }} />{SITES[s].short}</label>)}

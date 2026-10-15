@@ -52,6 +52,24 @@ export const ACTIONS: Record<string, ActionMeta> = Object.fromEntries([
   m("events", "template.save", "manage", "Create or edit a ticket template"),
   m("events", "template.default", "manage", "Change the default ticket template"),
   m("events", "template.delete", "manage", "Delete a ticket template"),
+  // Events: physical tickets, partners, ticket codes
+  m("events", "partner.save", "manage", "Add or edit a partner"),
+  m("events", "partner.status", "manage", "Suspend or reactivate a partner"),
+  m("events", "allocation.save", "manage", "Allocate tickets to a partner"),
+  m("events", "allocation.revoke", "manage", "Revoke a partner allocation", { sensitive: always }),
+  m("events", "allocation.issue", "manage", "Issue e-tickets from a partner allocation"),
+  m("events", "batch.create", "manage", "Generate physical tickets"),
+  m("events", "batch.markPrinted", "operate", "Mark a print batch printed"),
+  m("events", "tickets.stage", "operate", "Mark physical tickets distributed or sold"),
+  m("events", "order.ship", "operate", "Mark physical tickets posted"),
+  m("events", "order.pickedUp", "operate", "Mark physical tickets picked up"),
+  m("events", "ticket.void", "manage", "Void a ticket", { sensitive: always }),
+  m("events", "ticket.reissue", "manage", "Void and reissue a ticket", { sensitive: always }),
+  m("events", "ticket.retag", "manage", "Change a ticket's partner tag", { sensitive: always }),
+  m("events", "codes.save", "manage", "Change ticket code settings"),
+  // Events partner accounts (their own allocations only)
+  m("events", "partner.markSold", "partner", "Mark partner tickets sold"),
+  m("events", "partner.issue", "partner", "Issue e-tickets as a partner"),
 ]);
 
 /** Form field names like `stock[abc]` or `rows[0][min]` become nested objects and arrays. */

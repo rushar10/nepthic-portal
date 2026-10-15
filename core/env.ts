@@ -19,6 +19,10 @@ export const env = {
   encryptionKey: need("PORTAL_ENCRYPTION_KEY"),
   /** Minutes of inactivity before a session ends, and the longest a session can last. */
   idleMinutes: Number(process.env.PORTAL_IDLE_MINUTES ?? 30),
+  /** Two-factor sign-in. On unless PORTAL_REQUIRE_2FA is "false". When off, admins sign in with
+      email + password only, and sensitive actions ask for the password again instead of a code.
+      Switch it back on before going live. */
+  require2fa: (process.env.PORTAL_REQUIRE_2FA ?? "true").toLowerCase() !== "false",
   maxSessionHours: Number(process.env.PORTAL_MAX_SESSION_HOURS ?? 12),
   /** Optional IP allowlist: comma-separated IPs or IPv4 CIDRs. Empty = off. */
   ipAllowlist: (process.env.PORTAL_IP_ALLOWLIST ?? "").split(",").map((s) => s.trim()).filter(Boolean),

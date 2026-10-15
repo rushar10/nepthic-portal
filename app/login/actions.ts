@@ -11,13 +11,14 @@ const field = (fd: FormData, k: string) => String(fd.get(k) ?? "");
 export async function signIn(_: FormState, fd: FormData): Promise<FormState> {
   const r = await checkPassword(field(fd, "email"), field(fd, "password"));
   if ("error" in r) return { error: r.error };
+  if ("signedIn" in r) redirect(await landing(r.signedIn));
   redirect(r.next);
 }
 
 async function landing(adminId: string) {
   const a = await db.query.admins.findFirst({ where: eq(admins.id, adminId), columns: { role: true, mustChangePassword: true } });
   if (a?.mustChangePassword) return "/login/password";
-  return a?.role === "DOOR" ? "/scan" : "/";
+  return a?.role === "DOOR" ? "/scan" : a?.role === "PARTNER" ? "/partner" : "/";
 }
 
 export async function verifyCode(_: FormState, fd: FormData): Promise<FormState> {

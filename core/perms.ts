@@ -10,11 +10,13 @@ import type { SiteKey } from "./sites";
      STAFF       day-to-day work on assigned sites: answer quotes, process orders, edit stock.
                  No approvals, refunds, payments, pricing or settings.
      DOOR        the Events ticket scanner only. No portal screens.
+     PARTNER     an Events partner (reseller, outlet…): their own allocations, sales and
+                 e-tickets on the Partner page only. Scoped by their partner code.
 --------------------------------------------------------------------------- */
 
-export type Level = "view" | "operate" | "manage" | "door";
-export type Access = "manage" | "operate" | "door" | "none";
-export type Who = { role: AdminRole; sites: string[] };
+export type Level = "view" | "operate" | "manage" | "door" | "partner";
+export type Access = "manage" | "operate" | "door" | "partner" | "none";
+export type Who = { role: AdminRole; sites: string[]; partnerCode?: string | null };
 
 export function accessFor(a: Who, site: SiteKey): Access {
   if (a.role === "SUPER") return "manage";
@@ -22,13 +24,15 @@ export function accessFor(a: Who, site: SiteKey): Access {
   if (a.role === "SITE_ADMIN") return "manage";
   if (a.role === "STAFF") return "operate";
   if (a.role === "DOOR") return site === "events" ? "door" : "none";
+  if (a.role === "PARTNER") return site === "events" && a.partnerCode ? "partner" : "none";
   return "none";
 }
 
 export function allowed(access: Access, level: Level) {
-  if (access === "manage") return true;
-  if (access === "operate") return level !== "manage";
+  if (access === "manage") return level !== "partner";
+  if (access === "operate") return level !== "manage" && level !== "partner";
   if (access === "door") return level === "door";
+  if (access === "partner") return level === "partner";
   return false;
 }
 
@@ -38,4 +42,4 @@ export const can = (a: Who, site: SiteKey, level: Level) => allowed(accessFor(a,
 export const portalSites = (a: Who, all: SiteKey[]) => all.filter((s) => can(a, s, "view"));
 
 export const isSuper = (a: Who) => a.role === "SUPER";
-export const ROLE_LABEL: Record<AdminRole, string> = { SUPER: "Super Admin", SITE_ADMIN: "Site Admin", STAFF: "Staff", DOOR: "Door / scanner staff" };
+export const ROLE_LABEL: Record<AdminRole, string> = { SUPER: "Super Admin", SITE_ADMIN: "Site Admin", STAFF: "Staff", DOOR: "Door / scanner staff", PARTNER: "Events partner" };

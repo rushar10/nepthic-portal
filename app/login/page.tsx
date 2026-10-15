@@ -1,3 +1,4 @@
+import { env } from "@/core/env";
 import { redirect } from "next/navigation";
 import { ActionForm, Submit } from "@/ui/Forms";
 import { getAdmin } from "@/core/auth";
@@ -18,7 +19,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
       <div>
         <p className="eyebrow">Admin portal</p>
         <h1 id="t">Sign in</h1>
-        <p className="small dim" style={{ marginTop: 6 }}>For Nepthic staff. You&apos;ll be asked for a code from your authenticator app next.</p>
+        <p className="small dim" style={{ marginTop: 6 }}>For Nepthic staff.{env.require2fa ? " You'll be asked for a code from your authenticator app next." : ""}</p>
       </div>
       {sp.expired && <p className="note warn">That sign-in took too long. Start again.</p>}
       <ActionForm action={signIn} className="stack-sm">

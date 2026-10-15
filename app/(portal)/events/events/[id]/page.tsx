@@ -15,7 +15,7 @@ export const metadata = { title: "Event" };
 type T = { id: string; name: string; priceCents: number; capacity: number; sold: number };
 type D = {
   event: { id: string; slug: string; name: string; description: string; venue: string; address: string; city: string; startsAt: string; ageRestriction: string; hue: number; ticketTemplateId: string | null; status: "DRAFT" | "PUBLISHED" | "CANCELLED"; galleryIds: string[]; ticketTypes: T[] };
-  attendees: { id: string; code: string; holderName: string; status: string; checkedInAt: string | null; ticketType: { name: string; priceCents: number }; ticketOrder: { buyerEmail: string } }[];
+  attendees: { id: string; code: string; holderName: string; status: string; checkedInAt: string | null; ticketType: { name: string; priceCents: number }; ticketOrder: { buyerEmail: string } | null; buyerEmail?: string | null }[];
 };
 
 export default async function EventDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ created?: string }> }) {
@@ -92,7 +92,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
           <thead><tr><th>Name</th><th>Buyer email</th><th>Ticket</th><th>Code</th><th>Status</th><th>Checked in</th></tr></thead>
           <tbody>
             {attendees.map((t) => (
-              <tr key={t.id}><td>{t.holderName}</td><td className="small" data-label="Email">{t.ticketOrder.buyerEmail}</td><td data-label="Ticket">{t.ticketType.name} <span className="dim mono small">{aud(t.ticketType.priceCents)}</span></td>
+              <tr key={t.id}><td>{t.holderName}</td><td className="small" data-label="Email">{t.ticketOrder?.buyerEmail ?? t.buyerEmail ?? (t.holderName === "Physical ticket" ? "Physical stock" : "—")}</td><td data-label="Ticket">{t.ticketType.name} <span className="dim mono small">{aud(t.ticketType.priceCents)}</span></td>
                 <td className="mono small" data-label="Code">{t.code}</td><td data-label="Status"><Status value={t.status} /></td><td className="mono" data-label="In">{t.checkedInAt ? time(t.checkedInAt) : "—"}</td></tr>
             ))}
             {attendees.length === 0 && <tr><td colSpan={6} className="dim">No tickets sold yet.</td></tr>}

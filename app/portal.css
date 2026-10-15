@@ -96,3 +96,16 @@
 .tpl-presets .chip { border: 1.5px solid; border-radius: 999px; padding: 7px 14px; font: 600 13px var(--f-body); cursor: pointer; }
 .tpl-colour input[type="color"] { width: 46px; min-width: 46px; height: 44px; padding: 3px; border-radius: 12px; cursor: pointer; }
 .tpl-check { display: flex; flex-wrap: wrap; gap: 8px 18px; border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px 12px; margin: 0; }
+
+/* Partners, physical tickets */
+.partner-badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 8px; font: 700 12px var(--f-mono); color: #0B0A10; letter-spacing: .04em; }
+.copyable { user-select: all; word-break: break-all; }
+.meter { position: relative; height: 8px; border-radius: 99px; background: var(--surface-2); overflow: hidden; min-width: 120px; }
+.meter > i { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 99px; }
+.meter > i.b { background: color-mix(in oklab, var(--accent) 45%, transparent); }
+.stage-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.code-preview { font: 600 1.15rem var(--f-mono); letter-spacing: .04em; padding: 10px 14px; border-radius: 12px; background: var(--surface-2); display: inline-block; }
+.alert-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.alert-list li { padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line-strong); }
+.alert-list li.bad { border-color: color-mix(in oklab, var(--bad) 60%, transparent); background: color-mix(in oklab, var(--bad) 10%, transparent); }
+.alert-list li.warn { border-color: color-mix(in oklab, var(--warn) 60%, transparent); background: color-mix(in oklab, var(--warn) 10%, transparent); }

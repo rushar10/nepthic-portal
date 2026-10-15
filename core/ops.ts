@@ -24,10 +24,10 @@ export type OpResult<T> =
 let key: Promise<KeyLike> | null = null;
 const privateKey = () => (key ??= importPKCS8(env.privateKey, "EdDSA"));
 
-type Caller = Pick<PortalAdmin, "id" | "email" | "name" | "role" | "sites">;
+type Caller = Pick<PortalAdmin, "id" | "email" | "name" | "role" | "sites"> & { partnerCode?: string | null };
 
 export async function signFor(a: Caller, audience: string, extra: Record<string, unknown> = {}, ttl = "60s") {
-  return new SignJWT({ nep: { email: a.email, name: a.name, role: a.role, sites: a.role === "SUPER" ? ["clothing", "wholesale", "events"] : a.sites, ...extra } })
+  return new SignJWT({ nep: { email: a.email, name: a.name, role: a.role, sites: a.role === "SUPER" ? ["clothing", "wholesale", "events"] : a.sites, ...(a.role === "PARTNER" && a.partnerCode ? { partner: a.partnerCode } : {}), ...extra } })
     .setProtectedHeader({ alg: "EdDSA", typ: "JWT" })
     .setIssuer("nepthic-portal").setAudience(audience).setSubject(a.id)
     .setIssuedAt().setExpirationTime(ttl).setJti(randomUUID())

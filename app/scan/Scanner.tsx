@@ -7,8 +7,10 @@ import { Icon } from "@/ui/Icons";
 import { scanTicket } from "./actions";
 
 type Logged = ScanResult & { at: string; offline?: boolean };
-type MTicket = { code: string; status: string; holder: string; type: string };
-type Queued = { raw: string; code: string; at: string };
+type MTicket = { code: string; key?: string; qr?: string; status: string; holder: string; type: string; gate?: string | null; format?: ScanResult["format"]; unsold?: boolean; source?: ScanResult["source"] & { suspended?: boolean } };
+type Queued = { raw: string; code: string; at: string; gate?: string };
+const gKey = (id: string) => `nepthic.scan.gate.${id}`;
+const keyOf = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
 const mKey = (id: string) => `nepthic.scan.manifest.${id}`;
 const qKey = (id: string) => `nepthic.scan.queue.${id}`;
@@ -22,7 +24,10 @@ const now = () => new Date().toLocaleTimeString("en-AU", { hour: "2-digit", minu
    - torch toggle for dark venues
    - keeps working offline: checks codes against a downloaded ticket list, queues the
      check-ins and syncs them (re-validated on the server) when signal returns. */
-export function Scanner({ eventId, eventName, issued, admitted: initialAdmitted }: { eventId: string; eventName: string; issued: number; admitted: number }) {
+export function Scanner({ eventId, eventName, issued, admitted: initialAdmitted, gates }: { eventId: string; eventName: string; issued: number; admitted: number; gates: string[] }) {
+  const [gate, setGateState] = useState(gates[0]);
+  const setGate = (g: string) => { setGateState(g); save(gKey(eventId), g); };
+  useEffect(() => { const g = load<string | null>(gKey(eventId), null); if (g && gates.includes(g)) setGateState(g); }, [eventId, gates]);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [flash, setFlash] = useState<ScanResult | null>(null);
   const [log, setLog] = useState<Logged[]>([]);
@@ -45,7 +50,7 @@ export function Scanner({ eventId, eventName, issued, admitted: initialAdmitted 
       if (!r.ok) return;
       const data = await r.json();
       save(mKey(eventId), data);
-      setListAt(new Date(data.at).toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" }));
+      setListAt(new Date(data.at).toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", timeZone: "Australia/Brisbane" }));
     } catch { /* offline: keep the last list */ }
   }, [eventId]);
 
@@ -53,7 +58,7 @@ export function Scanner({ eventId, eventName, issued, admitted: initialAdmitted 
     setOnline(navigator.onLine);
     setQueued(load<Queued[]>(qKey(eventId), []).length);
     const cached = load<{ at: string } | null>(mKey(eventId), null);
-    if (cached) setListAt(new Date(cached.at).toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" }));
+    if (cached) setListAt(new Date(cached.at).toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", timeZone: "Australia/Brisbane" }));
     refreshList();
     const t = setInterval(refreshList, 60_000);
     const on = () => { setOnline(true); sync(); };
@@ -70,7 +75,7 @@ export function Scanner({ eventId, eventName, issued, admitted: initialAdmitted 
     const left: Queued[] = [];
     for (const item of q) {
       try {
-        const r = await scanTicket(eventId, item.raw);
+        const r = await scanTicket(eventId, item.raw, item.gate ?? gates[0], "OFFLINE");
         if (r.state !== "ok") setLog((l) => [{ ...r, title: `Sync: ${r.title}`, at: item.at }, ...l]);
       } catch { left.push(item); }
     }
@@ -79,18 +84,23 @@ export function Scanner({ eventId, eventName, issued, admitted: initialAdmitted 
     if (left.length < q.length) refreshList();
   }, [eventId, refreshList]);
 
+  // Offline: match the QR's id (NPT2), an older signed code (NPT1) or a typed code against the
+  // downloaded list. The server re-checks every queued scan when signal returns.
   const offlineCheck = (raw: string): ScanResult => {
-    const code = (raw.startsWith("NPT1:") ? raw.split(":")[1] : raw).trim().toUpperCase();
+    const input = raw.trim();
     const list = load<{ tickets: MTicket[] } | null>(mKey(eventId), null);
-    if (!list) return { state: "bad", title: "Offline, no ticket list", detail: "Reconnect once to download this event's tickets.", code };
+    if (!list) return { state: "bad", title: "Offline, no ticket list", detail: "Reconnect once to download this event's tickets.", code: input.slice(0, 24) };
+    const t = input.startsWith("NPT2:") ? list.tickets.find((x) => x.qr === input.split(":")[1])
+      : input.startsWith("NPT1:") ? list.tickets.find((x) => x.code === input.split(":")[1]?.toUpperCase())
+        : list.tickets.find((x) => (x.key ?? keyOf(x.code)) === keyOf(input));
+    const code = t?.code ?? input.slice(0, 24);
     const q = load<Queued[]>(qKey(eventId), []);
-    const t = list.tickets.find((x) => x.code === code);
-    const base = { code, holder: t?.holder, ticketType: t?.type };
+    const base = { code, holder: t?.holder, ticketType: t?.type, format: t?.format, source: t?.source };
     if (!t) return { ...base, state: "bad", title: "Invalid ticket", detail: "Not on this event's ticket list." };
-    if (t.status === "USED" || q.some((x) => x.code === code)) return { ...base, state: "bad", title: "Already used", detail: "Already checked in. Send to a supervisor." };
-    if (t.status === "REFUNDED" || t.status === "VOID") return { ...base, state: "bad", title: "Not valid", detail: "Refunded or cancelled." };
-    if (t.status === "REFUND_REQUESTED") return { ...base, state: "warn", title: "Refund pending", detail: "Ask a supervisor before admitting." };
-    q.push({ raw, code, at: now() });
+    if (t.status === "USED" || q.some((x) => x.code === code)) return { ...base, state: "bad", title: "Already used", detail: `Already checked in${t.gate ? ` at ${t.gate}` : ""}. Send to a supervisor.` };
+    if (t.status === "REFUNDED" || t.status === "VOID") return { ...base, state: "bad", title: "Not valid", detail: "Refunded, void or replaced." };
+    if (t.status === "REFUND_REQUESTED" || t.unsold || t.source?.suspended) return { ...base, state: "warn", title: "Check with a supervisor", detail: t.unsold ? "Physical stock not marked sold." : t.source?.suspended ? "This partner is suspended." : "The holder has an open refund request." };
+    q.push({ raw, code, at: now(), gate });
     save(qKey(eventId), q);
     setQueued(q.length);
     return { ...base, state: "ok", title: "Admit", detail: `${t.holder} · ${t.type} · saved offline, will sync` };
@@ -109,7 +119,7 @@ export function Scanner({ eventId, eventName, issued, admitted: initialAdmitted 
     } catch { /* sound is optional */ }
   };
 
-  const submit = useCallback(async (raw: string) => {
+  const submit = useCallback(async (raw: string, method: "CAMERA" | "MANUAL" = "CAMERA") => {
     const t = Date.now();
     if (busy.current || (raw === lastRef.current.text && t - lastRef.current.t < 3000)) return;
     lastRef.current = { text: raw, t };
@@ -117,7 +127,7 @@ export function Scanner({ eventId, eventName, issued, admitted: initialAdmitted 
     let r: ScanResult, offline = false;
     try {
       if (!navigator.onLine) throw new Error("offline");
-      r = await scanTicket(eventId, raw);
+      r = await scanTicket(eventId, raw, gate, method);
     } catch {
       offline = true;
       setOnline(false);
@@ -131,7 +141,7 @@ export function Scanner({ eventId, eventName, issued, admitted: initialAdmitted 
     if (r.state === "ok") setAdmitted((n) => n + 1);
     setLog((l) => [{ ...r, at: now(), offline }, ...l].slice(0, 40));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eventId]);
+  }, [eventId, gate]);
 
   const stop = () => {
     streamRef.current?.getTracks().forEach((tr) => tr.stop());
@@ -208,6 +218,11 @@ export function Scanner({ eventId, eventName, issued, admitted: initialAdmitted 
       <div className="stack">
         <div className="panel prox">
           <div className="spread"><b>{eventName}</b><span className="pill info">{admitted} / {issued} in</span></div>
+          {gates.length > 1 && (
+            <label className="row small">Gate
+              <select value={gate} onChange={(e) => setGate(e.target.value)} aria-label="Gate you're scanning at">{gates.map((g) => <option key={g}>{g}</option>)}</select>
+            </label>
+          )}
           <div className="row">{status}<span className="small dim">{listAt ? `Offline list from ${listAt}` : "Downloading offline list…"}</span></div>
 
           {(camera === "on" || camera === "starting") && createPortal(
@@ -218,6 +233,7 @@ export function Scanner({ eventId, eventName, issued, admitted: initialAdmitted 
                 {flash && (
                   <div className={`scan-flash ${flash.state}`} role="status" aria-live="assertive">
                     <b>{flash.title}</b><span>{flash.detail}</span>
+                    <ScanMeta r={flash} />
                   </div>
                 )}
               </div>
@@ -237,7 +253,7 @@ export function Scanner({ eventId, eventName, issued, admitted: initialAdmitted 
           )}
           {camera === "error" && <p className="note bad">Camera blocked. Allow camera access in the browser settings, or type codes below.</p>}
 
-          <form className="row" style={{ flexWrap: "nowrap" }} onSubmit={(e) => { e.preventDefault(); if (manual.trim()) { lastRef.current = { text: "", t: 0 }; submit(manual.trim()); setManual(""); } }}>
+          <form className="row" style={{ flexWrap: "nowrap" }} onSubmit={(e) => { e.preventDefault(); if (manual.trim()) { lastRef.current = { text: "", t: 0 }; submit(manual.trim(), "MANUAL"); setManual(""); } }}>
             <label htmlFor="manual-code" className="sr-only">Ticket code</label>
             <input id="manual-code" className="big-input" style={{ flex: 1, minWidth: 0, width: 0 }} placeholder="NPT-XXXX-XXXX" autoComplete="off" autoCapitalize="characters" spellCheck={false} enterKeyHint="go"
               value={manual} onChange={(e) => setManual(e.target.value)} />
@@ -248,7 +264,7 @@ export function Scanner({ eventId, eventName, issued, admitted: initialAdmitted 
       </div>
       <div className="stack">
         <div className={`result ${result?.state ?? ""}`} aria-live="polite">
-          {result ? (<><b>{result.title}</b><span>{result.detail}</span>{result.code && <span className="code dim">{result.code}</span>}</>)
+          {result ? (<><b>{result.title}</b><span>{result.detail}</span><ScanMeta r={result} />{result.code && <span className="code dim">{result.code}</span>}</>)
             : (<><b style={{ color: "var(--muted)" }}>Ready</b><span className="dim">Scan a ticket to check it in.</span></>)}
         </div>
         {log.length > 0 && (
@@ -265,5 +281,24 @@ export function Scanner({ eventId, eventName, issued, admitted: initialAdmitted 
         )}
       </div>
     </div>
+  );
+}
+
+const FORMAT_LABEL = { ETICKET: "E-ticket", PHYSICAL: "Physical ticket", BOTH: "E-ticket + physical" } as const;
+
+/** Where the ticket came from (partner badge in the partner's colour), its format and zone. */
+function ScanMeta({ r }: { r: ScanResult }) {
+  if (!r.source && !r.format && !r.zone) return null;
+  return (
+    <span className="scan-meta">
+      {r.source && (
+        <span className="scan-source" style={{ ["--src" as string]: r.source.color }}>
+          <i aria-hidden="true" />{r.source.kind === "PARTNER" ? `Sold by ${r.source.label}` : r.source.label}{r.source.code ? ` · ${r.source.code}` : ""}
+        </span>
+      )}
+      {r.format && <span className="scan-chip">{FORMAT_LABEL[r.format]}</span>}
+      {r.ticketType && <span className="scan-chip">{r.ticketType}{r.zone ? ` · ${r.zone}` : ""}</span>}
+      {r.firstScan && <span className="scan-chip">First scan {new Date(r.firstScan.at).toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", timeZone: "Australia/Brisbane" })}{r.firstScan.gate ? ` · ${r.firstScan.gate}` : ""}</span>}
+    </span>
   );
 }

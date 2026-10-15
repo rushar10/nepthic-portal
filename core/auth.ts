@@ -53,7 +53,7 @@ export async function signOut() {
 }
 
 /** Step 1. Returns a message for the form, or where to go next. */
-export async function checkPassword(emailIn: string, password: string): Promise<{ error: string } | { next: "/login/verify" | "/login/setup" }> {
+export async function checkPassword(emailIn: string, password: string): Promise<{ error: string } | { next: "/login/verify" | "/login/setup" } | { signedIn: string }> {
   const email = emailIn.trim().toLowerCase();
   const ip = await clientIp();
   const since = new Date(Date.now() - LOCK_MINUTES * 60e3);
@@ -78,6 +78,13 @@ export async function checkPassword(emailIn: string, password: string): Promise<
   }
   if (!ok) { await failed(a.id, a.email, a.failedAttempts, "password"); return generic; }
 
+  if (!env.require2fa) {
+    // 2FA switched off (PORTAL_REQUIRE_2FA=false): the password alone signs in.
+    await db.update(admins).set({ failedAttempts: 0, lockedUntil: null, lastLoginAt: new Date() }).where(eq(admins.id, a.id));
+    await newSession(a.id, "active");
+    await audit({ admin: a, site: "portal", action: "login.ok", detail: { twoFactor: "off" } });
+    return { signedIn: a.id };
+  }
   await newSession(a.id, "password");
   return { next: a.totpConfirmedAt ? "/login/verify" : "/login/setup" };
 }
@@ -119,7 +126,7 @@ export async function completeSignIn(adminId: string, code: string, secretOverri
   return { ok: true };
 }
 
-export type PortalAdmin = { id: string; email: string; name: string; role: AdminRole; sites: string[]; mustChangePassword: boolean; reauthUntil: Date | null; sessionId: string };
+export type PortalAdmin = { id: string; email: string; name: string; role: AdminRole; sites: string[]; partnerCode: string | null; mustChangePassword: boolean; reauthUntil: Date | null; sessionId: string };
 
 /** The signed-in admin for this request, or null. Applies the idle timeout. */
 export const getAdmin = cache(async (): Promise<PortalAdmin | null> => {
@@ -137,16 +144,17 @@ export const getAdmin = cache(async (): Promise<PortalAdmin | null> => {
   if (now - s.lastSeenAt.getTime() > 30e3) await db.update(sessions).set({ lastSeenAt: new Date() }).where(eq(sessions.id, id));
   const a = s.admin;
   return {
-    id: a.id, email: a.email, name: a.name, role: a.role, sites: a.sites, mustChangePassword: a.mustChangePassword, sessionId: id,
+    id: a.id, email: a.email, name: a.name, role: a.role, sites: a.sites, partnerCode: a.partnerCode, mustChangePassword: a.mustChangePassword, sessionId: id,
     reauthUntil: s.reauthAt ? new Date(s.reauthAt.getTime() + REAUTH_MINUTES * 60e3) : null,
   };
 });
 
 /** Page guard. Not signed in → login screen. Door staff → the scanner (they have no portal screens). */
-export async function requireAdmin(opts: { allowDoor?: boolean; allowPasswordChange?: boolean } = {}) {
+export async function requireAdmin(opts: { allowDoor?: boolean; allowPartner?: boolean; allowPasswordChange?: boolean } = {}) {
   const a = await getAdmin();
   if (!a) redirect("/login");
   if (a.role === "DOOR" && !opts.allowDoor) redirect("/scan");
+  if (a.role === "PARTNER" && !opts.allowPartner) redirect("/partner");
   if (a.mustChangePassword && !opts.allowPasswordChange) redirect("/login/password");
   return a;
 }
@@ -170,6 +178,7 @@ export const recentlyConfirmed = (a: PortalAdmin) => !!a.reauthUntil && a.reauth
     again, unless it was entered in the last 5 minutes. Returns an error message, or null if OK. */
 export async function confirmWith2fa(a: PortalAdmin, code: string): Promise<string | null> {
   if (recentlyConfirmed(a)) return null;
+  if (!env.require2fa) return confirmWithPassword(a, code);
   if (!code) return "Enter your 2FA code to confirm this.";
   const row = await db.query.admins.findFirst({ where: eq(admins.id, a.id) });
   if (!row?.totpSecret) return "Two-factor authentication isn't set up on this account.";
@@ -179,6 +188,18 @@ export async function confirmWith2fa(a: PortalAdmin, code: string): Promise<stri
     return "That 2FA code didn't work. Use the newest one from your authenticator app.";
   }
   await db.update(admins).set({ totpLastStep: step }).where(eq(admins.id, a.id));
+  await db.update(sessions).set({ reauthAt: new Date() }).where(eq(sessions.id, a.sessionId));
+  return null;
+}
+
+/** With 2FA switched off, sensitive actions ask for the account password again instead. */
+async function confirmWithPassword(a: PortalAdmin, password: string): Promise<string | null> {
+  if (!password) return "Enter your password to confirm this.";
+  const row = await db.query.admins.findFirst({ where: eq(admins.id, a.id) });
+  if (!row || !(await bcrypt.compare(password, row.passwordHash))) {
+    await audit({ admin: a, site: "portal", action: "reauth.failed", outcome: "failed", detail: { method: "password" } });
+    return "That password didn't match. Enter your portal password to confirm.";
+  }
   await db.update(sessions).set({ reauthAt: new Date() }).where(eq(sessions.id, a.sessionId));
   return null;
 }

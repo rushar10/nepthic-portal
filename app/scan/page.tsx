@@ -7,7 +7,7 @@ import { Scanner } from "./Scanner";
 
 export const metadata = { title: "Scanner" };
 
-type E = { id: string; name: string; startsAt: string; venue: string; issued: number; used: number };
+type E = { id: string; name: string; startsAt: string; venue: string; issued: number; used: number; gates: string[] };
 
 export default async function ScanPage({ searchParams }: { searchParams: Promise<{ event?: string }> }) {
   const a = await requireAdmin({ allowDoor: true });
@@ -27,7 +27,7 @@ export default async function ScanPage({ searchParams }: { searchParams: Promise
         <nav className="chips" aria-label="Event">
           {list.map((e) => <Link key={e.id} className="tab" href={`/scan?event=${e.id}`} aria-current={e.id === current.id ? "page" : undefined}>{e.name} · {dateShort(e.startsAt)}</Link>)}
         </nav>
-        <Scanner eventId={current.id} eventName={`${current.name} · doors ${time(current.startsAt)}`} issued={current.issued} admitted={current.used} />
+        <Scanner eventId={current.id} eventName={`${current.name} · doors ${time(current.startsAt)}`} issued={current.issued} admitted={current.used} gates={current.gates?.length ? current.gates : ["Main"]} />
       </div>
     </AppShell>
   );

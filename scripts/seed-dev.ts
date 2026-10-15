@@ -7,13 +7,14 @@ import { hashPassword } from "../core/auth-hash";
 import { encrypt } from "../core/crypto";
 import { newSecret } from "../core/totp";
 
-const PEOPLE: { name: string; email: string; role: AdminRole; sites: string[]; with2fa: boolean }[] = [
+const PEOPLE: { name: string; email: string; role: AdminRole; sites: string[]; with2fa: boolean; partnerCode?: string }[] = [
   { name: "Ava Owner", email: "owner@nepthic.com", role: "SUPER", sites: [], with2fa: true },
   { name: "Will Wholesale", email: "wholesale-admin@nepthic.com", role: "SITE_ADMIN", sites: ["wholesale"], with2fa: true },
   { name: "Eve Events", email: "events-admin@nepthic.com", role: "SITE_ADMIN", sites: ["events"], with2fa: true },
   { name: "Sam Staff", email: "staff@nepthic.com", role: "STAFF", sites: ["wholesale", "events"], with2fa: true },
   { name: "Dan Door", email: "door@nepthic.com", role: "DOOR", sites: ["events"], with2fa: true },
   { name: "Nina New", email: "new-admin@nepthic.com", role: "STAFF", sites: ["wholesale"], with2fa: false },
+  { name: "Mia Tran", email: "mia@halftone.example", role: "PARTNER", sites: ["events"], with2fa: true, partnerCode: "P012" },
 ];
 
 async function main() {
@@ -22,7 +23,7 @@ async function main() {
   for (const p of PEOPLE) {
     const password = "demo-password-123";
     const secret = p.with2fa ? newSecret() : null;
-    const values = { name: p.name, role: p.role, sites: p.sites, passwordHash: await hashPassword(password), mustChangePassword: false,
+    const values = { name: p.name, role: p.role, sites: p.sites, partnerCode: p.partnerCode ?? null, passwordHash: await hashPassword(password), mustChangePassword: false,
       totpSecret: secret ? encrypt(secret) : null, totpConfirmedAt: secret ? new Date() : null, totpLastStep: 0, failedAttempts: 0, lockedUntil: null, disabledAt: null };
     const existing = await db.query.admins.findFirst({ where: eq(admins.email, p.email) });
     if (existing) await db.update(admins).set(values).where(eq(admins.id, existing.id));

@@ -14,7 +14,7 @@ import type { FormState } from "@/ui/Forms";
 const META_FIELDS = (k: string) => k.startsWith("_") || k === "confirmCode" || k.startsWith("$ACTION");
 
 export async function runAction(_: FormState, fd: FormData): Promise<FormState> {
-  const a = await requireAdmin();
+  const a = await requireAdmin({ allowPartner: true }); // partner actions are limited by role level below
   const key = String(fd.get("_a") ?? "");
   const meta = Object.hasOwn(ACTIONS, key) ? ACTIONS[key] : undefined;
   if (!meta) return { error: "Unknown action." };

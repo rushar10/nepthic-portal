@@ -1,3 +1,4 @@
+import { env } from "@/core/env";
 import { admins, and, asc, db, eq } from "@/db";
 import { recentlyConfirmed, requireSite } from "@/core/auth";
 import { dateShort, time } from "@/ui/format";
@@ -27,7 +28,7 @@ export default async function DoorStaff() {
                 <td data-label="Status">{d.disabledAt ? <span className="pill bad">Removed</span> : <span className="pill ok">Active</span>}</td>
                 <td>
                   <details><summary className="small" style={{ cursor: "pointer" }}>Manage</summary>
-                    <AccountForm action={accountAction} confirmed={confirmed}>
+                    <AccountForm action={accountAction} confirmed={confirmed} twoFactor={env.require2fa}>
                       <input type="hidden" name="_door" value="1" /><input type="hidden" name="id" value={d.id} />
                       <div className="row">
                         <button className="btn btn-sm" name="do" value="reset-password">Reset password</button>
@@ -45,7 +46,7 @@ export default async function DoorStaff() {
       </section>
       <section className="panel prox">
         <h2 className="h3">Add scanner staff</h2>
-        <AccountForm action={createAccount} confirmed={confirmed}>
+        <AccountForm action={createAccount} confirmed={confirmed} twoFactor={env.require2fa}>
           <input type="hidden" name="_door" value="1" />
           <div className="form-grid">
             <label className="f">Name<input type="text" name="name" required autoComplete="off" /></label>

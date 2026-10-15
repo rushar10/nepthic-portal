@@ -17,7 +17,7 @@ export async function changePassword(_: FormState, fd: FormData): Promise<FormSt
   await db.update(admins).set({ passwordHash: await hashPassword(next), mustChangePassword: false }).where(eq(admins.id, a.id));
   await db.delete(sessions).where(and(eq(sessions.adminId, a.id), ne(sessions.id, a.sessionId)));
   await audit({ admin: a, site: "portal", action: "account.password_changed" });
-  if (a.mustChangePassword) redirect(a.role === "DOOR" ? "/scan" : "/");
+  if (a.mustChangePassword) redirect(a.role === "DOOR" ? "/scan" : a.role === "PARTNER" ? "/partner" : "/");
   return { ok: "Password changed. You've been signed out on your other devices." };
 }
 

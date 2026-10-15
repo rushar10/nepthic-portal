@@ -1,3 +1,4 @@
+import { env } from "@/core/env";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { requireAdmin } from "@/core/auth";
@@ -56,6 +57,9 @@ export default async function PortalLayout({ children }: { children: React.React
         <PortalRail nav={nav} logout={logout} />
         <main className="adm-page" id="main">
           <SiteSwitcher items={sw} className="switcher mob-switcher" />
+          {!env.require2fa && a.role === "SUPER" && (
+            <p className="note warn small" role="status">Two-factor sign-in is switched off (<span className="mono">PORTAL_REQUIRE_2FA=false</span>): admins sign in with a password only. Switch it back on before launch.</p>
+          )}
           {children}
         </main>
       </div>

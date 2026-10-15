@@ -20,6 +20,7 @@
   - dashboard, events with ticket types & capacity, and attendees
   - refund approvals, check-in stats, customers
   - sales & payments, scanner staff, settings
+  - **partners** (codes, commission, sales links, partner logins), **allocations** with reserved number ranges, **physical tickets** (bulk generation, print-ready PDFs in stub/A4/thermal, CSV, Generated → Printed → Distributed → Sold), **ticket search** with void / reissue / re-tag, **partner reports** with timelines, alerts and CSV/PDF export, and **ticket settings** (code format with live preview, checkout formats, gates). See [../docs/physical-tickets-and-partners.md](../docs/physical-tickets-and-partners.md)
   - **ticket templates**: design how tickets look (layout, colours, pattern, wording, which details show, fine print) with a live preview, then pick one per event or set a default
 - **Clothing:** the section and its screens (products, inventory, orders, customers, discounts) are ready. It says "not connected" until the Clothing site adds the admin API ([../docs/admin-api.md](../docs/admin-api.md)).
 - **Scanner** at `/scan`: the Events door app. It uses the camera, works offline with a sync queue, and gives sound and vibration feedback. Door staff can open only this page.
@@ -35,6 +36,7 @@
 | Site Admin | Everything on their assigned site(s): approvals, refunds, payments, pricing, settings, events. |
 | Staff | Day-to-day work on assigned sites: answer quotes, process orders, edit stock. No settings, payments, approvals or refunds. |
 | Door / scanner staff | The Events scanner only. No portal screens. |
+| Events partner | Only their own Partner page (`/partner`): their allocations, sold / unsold / scanned, marking physical tickets sold and issuing e-tickets. Never another partner's data. |
 
 Roles are checked twice: by the portal before it calls a site, and again by the site on every request. These sensitive actions need the 2FA code again, which then counts for 5 minutes:
 
