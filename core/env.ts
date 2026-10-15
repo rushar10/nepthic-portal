@@ -9,12 +9,25 @@ function need(name: string, devFallback = "") {
 }
 const trim = (u: string) => u.replace(/\/$/, "");
 
+/** Rebuilds a PEM key from however it was pasted into a hosting dashboard: with or without the
+    surrounding quotes or the NAME= prefix, with real line breaks, "\\n" escapes or spaces. */
+export function toPem(raw: string, kind: "PRIVATE" | "PUBLIC", name: string): string {
+  let s = raw.trim().replace(/^([\'"])([\s\S]*)\1$/, "$2").replace(new RegExp(`^${name}\\s*=\\s*`), "");
+  s = s.trim().replace(/^([\'"])([\s\S]*)\1$/, "$2").replace(/\\n/g, "\n");
+  const other = kind === "PRIVATE" ? "PUBLIC" : "PRIVATE";
+  if (s.includes(`BEGIN ${other} KEY`)) throw new Error(`${name} holds the ${other.toLowerCase()} key. Paste the ${kind.toLowerCase()} key from "npm run keys" instead.`);
+  const body = s.replace(/-----(BEGIN|END)[^-]*-----/g, "").replace(/[^A-Za-z0-9+/=]/g, "");
+  if (!body) return "";
+  if (body.length < 60) throw new Error(`${name} is too short to be a key. Paste the whole ${kind.toLowerCase()} key from "npm run keys".`);
+  return `-----BEGIN ${kind} KEY-----\n${body.match(/.{1,64}/g)!.join("\n")}\n-----END ${kind} KEY-----\n`;
+}
+
 export const env = {
   isProd,
   /** Where the portal is served (admin.nepthic.com). */
   url: trim(process.env.PORTAL_URL ?? "http://localhost:3003"),
   /** Ed25519 private key (PKCS8 PEM) that signs every request to the sites. `npm run keys` makes one. */
-  privateKey: need("PORTAL_PRIVATE_KEY").replace(/\\n/g, "\n"),
+  privateKey: toPem(need("PORTAL_PRIVATE_KEY"), "PRIVATE", "PORTAL_PRIVATE_KEY"),
   /** 32-byte key (base64) that encrypts 2FA secrets at rest. */
   encryptionKey: need("PORTAL_ENCRYPTION_KEY"),
   /** Minutes of inactivity before a session ends, and the longest a session can last. */
