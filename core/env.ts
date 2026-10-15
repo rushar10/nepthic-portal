@@ -2,7 +2,7 @@ const isProd = process.env.NODE_ENV === "production";
 const building = process.env.NEXT_PHASE === "phase-production-build";
 
 function need(name: string, devFallback = "") {
-  const v = process.env[name];
+  const v = process.env[name]?.trim().replace(/^([\'"])([\s\S]*)\1$/, "$2");
   if (v) return v;
   if (isProd && !building) throw new Error(`${name} must be set in production`);
   return devFallback;
