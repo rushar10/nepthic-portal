@@ -7,7 +7,7 @@ export type Counts = Partial<Record<SiteKey, { total: number; [k: string]: numbe
 
 /** Navigation for each section of the portal, limited to what this person may open. */
 export function navFor(a: Who, counts: Counts): Record<Section, NavItem[]> {
-  const ws = counts.wholesale, ev = counts.events;
+  const ws = counts.wholesale, ev = counts.events, clo = counts.clothing;
   const pick = (site: SiteKey, items: (NavItem & { level?: "view" | "manage" })[]) =>
     can(a, site, "view") ? items.filter((i) => can(a, site, i.level ?? "view")).map(({ level: _l, ...i }) => i) : [];
 
@@ -23,10 +23,10 @@ export function navFor(a: Who, counts: Counts): Record<Section, NavItem[]> {
     clothing: pick("clothing", [
       { href: "/clothing", label: "Clothing overview", icon: "chart", match: [] },
       { href: "/clothing/products", label: "Products", icon: "shirt" },
-      { href: "/clothing/inventory", label: "Inventory", icon: "layers" },
-      { href: "/clothing/orders", label: "Orders", icon: "bag" },
+      { href: "/clothing/inventory", label: "Inventory", icon: "layers", badge: clo?.lowStock },
+      { href: "/clothing/orders", label: "Orders", icon: "bag", badge: clo?.orders },
       { href: "/clothing/customers", label: "Customers", icon: "users" },
-      { href: "/clothing/discounts", label: "Discounts", icon: "card", level: "manage" },
+      { href: "/clothing/discounts", label: "Discounts", icon: "card", level: "manage", group: "admin" },
     ]),
     wholesale: pick("wholesale", [
       { href: "/wholesale", label: "Wholesale dashboard", icon: "chart", match: [] },

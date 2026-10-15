@@ -1,39 +1,62 @@
 import Link from "next/link";
 import { requireSite } from "@/core/auth";
 import { callSite } from "@/core/ops";
-import { Icon } from "@/ui/Icons";
+import { aud, aud0, dateShort, time } from "@/ui/format";
+import { PullToRefresh } from "@/ui/ux/PullToRefresh";
+import { Card, StatCard } from "@/components/admin/dash/Card";
 import { SectionHead } from "@/components/Section";
 import { SiteProblem } from "@/components/SiteProblem";
-import { CLOTHING_SECTIONS } from "@/core/clothing";
+import { ORDER_LABEL, type CloSummary } from "@/core/clothing";
 
 export const metadata = { title: "Clothing" };
 
+const CLO = "var(--clo)";
+const changePct = (now: number, prev: number) => (prev > 0 ? Math.round(((now - prev) / prev) * 100) : now > 0 ? null : 0);
 
-/* Clothing (nepthic.com) joins the portal the same way as Wholesale and Events: by adding the
-   admin API described in docs/admin-api.md. Until then this section says it isn't connected. */
-export default async function Clothing() {
+/* Clothing at a glance, read from the Clothing store's admin API (clothing-kit). */
+export default async function ClothingDashboard() {
   const a = await requireSite("clothing");
-  const r = await callSite(a, "clothing", "summary");
+  const r = await callSite<CloSummary>(a, "clothing", "summary");
+  if (!r.ok) return <><SectionHead site="clothing" title="Clothing Dashboard" /><SiteProblem site="clothing" r={r} /></>;
+  const s = r.data;
   return (
-    <>
-      <SectionHead site="clothing" title="Clothing" livePath={null} sub="The original Nepthic store at nepthic.com." />
-      {!r.ok && <SiteProblem site="clothing" r={r} />}
-      <div className="cards-2">
-        {CLOTHING_SECTIONS.map((s) => (
-          <Link key={s.key} href={`/clothing/${s.key}`} className="dcard" data-glow style={{ textDecoration: "none", color: "inherit", ["--c" as string]: "var(--clo)" }}>
-            <div className="stat-top"><span className="stat-label">{s.label}</span><span className="stat-ico"><Icon name={s.icon} size={20} /></span></div>
-            <span className="small dim">{s.what}</span>
-          </Link>
-        ))}
+    <PullToRefresh>
+      <SectionHead site="clothing" title="Clothing Dashboard" sub="The retail store. Products, stock, orders and discounts here change the live store straight away." />
+      <div className="dash-stack" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))" }}>
+        <StatCard label="Revenue · 30 days" icon="card" accent={CLO} href="/clothing/orders?show=all" value={aud0(s.revenue.last30Cents)}
+          pct={changePct(s.revenue.last30Cents, s.revenue.prev30Cents)} note={`after refunds · today ${aud0(s.today.totalCents)}`} />
+        <StatCard label="Orders · 7 days" icon="bag" accent={CLO} href="/clothing/orders?show=all" value={s.orders.now.toLocaleString("en-AU")}
+          pct={changePct(s.orders.now, s.orders.prev)} note={`${s.units.now} items sold`} />
+        <StatCard label="To ship" icon="box" accent={CLO} href="/clothing/orders" value={String(s.toFulfil)}
+          note={s.oldestOpenAt ? `oldest from ${dateShort(s.oldestOpenAt)} ${time(s.oldestOpenAt)}` : "all caught up"} />
+        <StatCard label="Low stock" icon="layers" accent={CLO} href="/clothing/inventory" value={String(s.lowStock.count)}
+          note={`sizes at ${s.lowStock.threshold} or fewer`} />
       </div>
-      <section className="panel prox">
-        <h2 className="h3">Connecting Clothing</h2>
-        <ol className="small" style={{ paddingLeft: "1.2em", display: "grid", gap: 6 }}>
-          <li>In the Clothing site&apos;s code, add the admin API (<span className="mono">POST /api/ops/v1/&lt;operation&gt;</span>) that checks the portal&apos;s signed token. The contract is in <span className="mono">docs/admin-api.md</span>; Wholesale&apos;s <span className="mono">core/ops/</span> folder is a working example.</li>
-          <li>Give the Clothing site <span className="mono">PORTAL_PUBLIC_KEY</span>, and remove any <span className="mono">/admin</span> pages it has.</li>
-          <li>Set <span className="mono">CLOTHING_API_URL</span> on the portal. This section switches on by itself.</li>
-        </ol>
-      </section>
-    </>
+      <div className="cards-2">
+        <Card title="Latest orders" id="t-recent" accent={CLO} action={<Link className="more" href="/clothing/orders?show=all">All orders <span aria-hidden="true">›</span></Link>}>
+          <ul className="plain-list">
+            {s.recent.map((o) => (
+              <li key={o.id} className="spread">
+                <span><b className="mono">{o.number}</b> <span className="dim small">{o.customerName} · {dateShort(o.createdAt)}</span></span>
+                <span className="row"><span className={`pill ${ORDER_LABEL[o.status][1]}`}>{ORDER_LABEL[o.status][0]}</span><span className="mono">{aud(o.totalCents)}</span></span>
+              </li>
+            ))}
+            {s.recent.length === 0 && <li className="dim">No orders yet.</li>}
+          </ul>
+        </Card>
+        <Card title="Running low" id="t-low" accent={CLO} action={<Link className="more" href="/clothing/inventory">Restock <span aria-hidden="true">›</span></Link>}>
+          <ul className="plain-list">
+            {s.lowStock.items.map((v) => (
+              <li key={v.sku} className="spread">
+                <span><b>{v.name}</b> <span className="dim small">{v.size} · {v.sku}</span></span>
+                <span className={`pill ${v.stock === 0 ? "bad" : "warn"}`}>{v.stock === 0 ? "Sold out" : `${v.stock} left`}</span>
+              </li>
+            ))}
+            {s.lowStock.items.length === 0 && <li className="dim">Every size is above {s.lowStock.threshold}.</li>}
+          </ul>
+        </Card>
+      </div>
+      <p className="small dim">{s.products.active} products live · {s.products.draft} draft{s.products.draft === 1 ? "" : "s"}. <Link href="/clothing/products">Manage products</Link></p>
+    </PullToRefresh>
   );
 }

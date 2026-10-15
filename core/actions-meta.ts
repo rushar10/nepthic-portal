@@ -5,7 +5,7 @@ import type { SiteKey } from "./sites";
    Every action the portal can send to a site, with the lowest role level that may send it
    and whether it needs the 2FA code again. The site checks the level again on its side.
 
-   Sensitive (2FA re-entry, valid 5 minutes): refunds, payment terms and payment settings,
+   Sensitive (2FA re-entry, valid 5 minutes): refunds (Clothing, Wholesale, Events), payment terms and payment settings,
    cancelling events, and anything that adds or removes access. Portal account changes are
    in app/(portal)/admins/actions.ts and are all sensitive.
 --------------------------------------------------------------------------- */
@@ -18,6 +18,15 @@ const m = (site: SiteKey, op: string, level: Level, label: string, extra: Partia
   [`${site}:${op}`, { site, op, level, label, ...extra }];
 
 export const ACTIONS: Record<string, ActionMeta> = Object.fromEntries([
+  // Clothing: day-to-day
+  m("clothing", "product.save", "operate", "Edit a product"),
+  m("clothing", "product.create", "operate", "Add a product"),
+  m("clothing", "stock.save", "operate", "Change stock"),
+  m("clothing", "order.fulfil", "operate", "Mark an order shipped"),
+  // Clothing: money and promotions
+  m("clothing", "order.refund", "manage", "Refund an order", { sensitive: always }),
+  m("clothing", "discount.save", "manage", "Create or edit a discount code"),
+  m("clothing", "discount.active", "manage", "Pause or switch on a discount code"),
   // Wholesale: day-to-day
   m("wholesale", "quote.respond", "operate", "Answer a quote or enquiry"),
   m("wholesale", "order.requestBalance", "operate", "Request an order balance"),

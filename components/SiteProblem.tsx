@@ -11,6 +11,7 @@ export function SiteProblem({ site, r }: { site: SiteKey; r: Extract<OpResult<un
     <section className="dcard site-problem" style={{ ["--c" as string]: s.cssVar }} role="status">
       <div className="stat-top"><span className="stat-label">{title}</span><span className="stat-ico"><Icon name={r.kind === "unavailable" ? "wifi-off" : "info"} size={20} /></span></div>
       <p className="muted">{r.error}</p>
+      {r.kind === "not-connected" && <p className="small dim">Install the admin API on the site ({site === "clothing" ? <span className="mono">clothing-kit/install.sh</span> : "see docs/admin-api.md"}), then set <span className="mono">{site.toUpperCase()}_API_URL</span> on the portal.</p>}
       {r.kind === "unavailable" && <p className="small dim">The other sites are unaffected and stay manageable. This screen tries again each time you open it.</p>}
     </section>
   );

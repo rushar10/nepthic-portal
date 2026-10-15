@@ -7,6 +7,7 @@ import { aud0 } from "@/ui/format";
 import { Icon } from "@/ui/Icons";
 import { PullToRefresh } from "@/ui/ux/PullToRefresh";
 import { LiveButton } from "@/components/Section";
+import type { CloSummary } from "@/core/clothing";
 
 export const metadata = { title: "Overview" };
 
@@ -21,8 +22,11 @@ export default async function Overview() {
   const results = Object.fromEntries(await Promise.all(sites.map(async (s) => [s, await callSite(a, s, "summary", {}, { timeoutMs: 4000 })] as const))) as Partial<Record<SiteKey, OpResult<unknown>>>;
   const ws = results.wholesale?.ok ? (results.wholesale.data as WS) : null;
   const ev = results.events?.ok ? (results.events.data as EV) : null;
-  const revenue = (ws?.revenue.last30Cents ?? 0) + (ev?.revenue.last30Cents ?? 0);
-  const waiting = (ws?.pending.total ?? 0) + (ev?.pending.total ?? 0);
+  const clo = results.clothing?.ok ? (results.clothing.data as CloSummary) : null;
+  const revenue = (clo?.revenue.last30Cents ?? 0) + (ws?.revenue.last30Cents ?? 0) + (ev?.revenue.last30Cents ?? 0);
+  const waiting = (clo?.pending.total ?? 0) + (ws?.pending.total ?? 0) + (ev?.pending.total ?? 0);
+  const answered = sites.filter((k) => results[k]?.ok).map((k) => SITES[k].short);
+  const missing = sites.filter((k) => !results[k]?.ok).map((k) => SITES[k].short);
 
   return (
     <PullToRefresh>
@@ -33,9 +37,11 @@ export default async function Overview() {
 
       <div className="dash-stack" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))" }}>
         <section className="dcard" data-glow><div className="stat-top"><span className="stat-label">Revenue · 30 days</span><span className="stat-ico"><Icon name="card" size={20} /></span></div>
-          <span className="big">{aud0(revenue)}</span><span className="small dim">Wholesale + Events{ws && ev ? "" : " (sites that answered)"} · Clothing not connected</span></section>
+          <span className="big">{aud0(revenue)}</span><span className="small dim">{answered.join(" + ") || "No sites answered"}{missing.length ? ` · ${missing.join(", ")} not included` : ""}</span></section>
         <section className="dcard" data-glow><div className="stat-top"><span className="stat-label">Waiting on the team</span><span className="stat-ico"><Icon name="inbox" size={20} /></span></div>
-          <span className="big">{waiting}</span><span className="small dim">quotes, returns, trade accounts and refunds</span></section>
+          <span className="big">{waiting}</span><span className="small dim">orders to ship, quotes, returns, trade accounts and refunds</span></section>
+        {clo && <section className="dcard" data-glow style={{ ["--c" as string]: "var(--clo)" }}><div className="stat-top"><span className="stat-label">Retail orders · 7 days</span><span className="stat-ico"><Icon name="bag" size={20} /></span></div>
+          <span className="big">{clo.orders.now}</span><span className="small dim">{clo.units.now.toLocaleString("en-AU")} items · {clo.toFulfil} to ship</span></section>}
         {ws && <section className="dcard" data-glow style={{ ["--c" as string]: "var(--ws)" }}><div className="stat-top"><span className="stat-label">Bulk orders · 7 days</span><span className="stat-ico"><Icon name="box" size={20} /></span></div>
           <span className="big">{ws.orders.now}</span><span className="small dim">{ws.units.now.toLocaleString("en-AU")} units</span></section>}
         {ev && <section className="dcard" data-glow style={{ ["--c" as string]: "var(--ev)" }}><div className="stat-top"><span className="stat-label">Tickets sold · 7 days</span><span className="stat-ico"><Icon name="ticket" size={20} /></span></div>
@@ -50,7 +56,14 @@ export default async function Overview() {
             <section key={s} className="dcard ov-site" data-glow style={{ ["--c" as string]: meta.cssVar, ["--glow-a" as string]: meta.accent }} aria-labelledby={`h-${s}`}>
               <div className="stat-top"><h2 className="h3" id={`h-${s}`}>{meta.short}</h2>
                 {r?.ok ? <span className="pill ok">Live</span> : r?.kind === "not-connected" ? <span className="pill">Not connected</span> : <span className="pill warn">Unavailable</span>}</div>
-              {!r?.ok ? <p className="muted small">{r?.error}</p> : s === "wholesale" && ws ? (
+              {!r?.ok ? <p className="muted small">{r?.error}</p> : s === "clothing" && clo ? (
+                <div className="kv2">
+                  <div><span>Revenue · 30 days</span><b>{aud0(clo.revenue.last30Cents)}</b></div>
+                  <div><span>Today</span><b>{aud0(clo.today.totalCents)}</b></div>
+                  <div><span>Orders to ship</span><b>{clo.toFulfil}</b></div>
+                  <div><span>Low-stock sizes</span><b>{clo.lowStock.count}</b></div>
+                </div>
+              ) : s === "wholesale" && ws ? (
                 <div className="kv2">
                   <div><span>Revenue · 30 days</span><b>{aud0(ws.revenue.last30Cents)}</b></div>
                   <div><span>Today</span><b>{aud0(ws.today.totalCents)}</b></div>
@@ -69,7 +82,7 @@ export default async function Overview() {
               ) : null}
               <div className="row">
                 <Link className="go" href={`/${s}`}>Manage {meta.short} <span aria-hidden="true">›</span></Link>
-                {s !== "clothing" && <LiveButton site={s} label="View live" />}
+                {(r?.ok || r?.kind !== "not-connected") && <LiveButton site={s} label="View live" />}
               </div>
             </section>
           );
