@@ -130,3 +130,21 @@
 .alert-list li { padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line-strong); }
 .alert-list li.bad { border-color: color-mix(in oklab, var(--bad) 60%, transparent); background: color-mix(in oklab, var(--bad) 10%, transparent); }
 .alert-list li.warn { border-color: color-mix(in oklab, var(--warn) 60%, transparent); background: color-mix(in oklab, var(--warn) 10%, transparent); }
+
+/* Door scans */
+.scan-events { display: grid; gap: 8px; }
+.scan-events .chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.scan-events-label { min-width: 84px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; font-size: 11px; }
+.scan-stats { display: flex; gap: 28px; flex-wrap: wrap; }
+.scan-stats > div { display: grid; }
+.scan-stats b { font: 700 28px/1.1 var(--f-display); }
+.ok-text { color: var(--ok); }
+.bad-text { color: var(--bad); }
+.stage-row a.pill { text-decoration: none; }
+.stage-row a.pill[aria-current="true"], .scan-partner[aria-current="true"] { outline: 2px solid var(--accent); outline-offset: 2px; }
+.scan-partners { display: flex; gap: 10px; flex-wrap: wrap; }
+.scan-partner { display: flex; gap: 10px; align-items: center; padding: 8px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2); color: inherit; text-decoration: none; }
+.scan-partner:hover { border-color: var(--line-strong); }
+.scan-filters { grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); }
+.scan-log .mono { font-family: var(--f-mono, ui-monospace, monospace); font-size: 13px; }
+.nowrap { white-space: nowrap; }
