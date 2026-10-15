@@ -49,7 +49,7 @@ export const ACTIONS: Record<string, ActionMeta> = Object.fromEntries([
   m("events", "gallery.remove", "manage", "Remove a gallery photo"),
   m("events", "refund.decide", "manage", "Approve or reject a ticket refund", { sensitive: (i) => i.decision === "APPROVED" }),
   m("events", "settings.save", "manage", "Change Events settings"),
-  m("events", "template.save", "manage", "Create or edit a ticket template"),
+  m("events", "template.save", "manage", "Create or edit a ticket template", { files: ["artEticket", "artStub"] }),
   m("events", "template.default", "manage", "Change the default ticket template"),
   m("events", "template.delete", "manage", "Delete a ticket template"),
   // Events: physical tickets, partners, ticket codes

@@ -10,7 +10,7 @@ import { SectionHead } from "@/components/Section";
 import { SiteProblem } from "@/components/SiteProblem";
 import { DEFAULT_TEMPLATE } from "@/core/ticket-design";
 import { TemplateFields } from "../TemplateFields";
-import { sampleQr } from "../sample";
+import { sampleMatrix, sampleQr } from "../sample";
 import type { Tpl } from "../page";
 
 export const metadata = { title: "Ticket template" };
@@ -43,7 +43,7 @@ export default async function TemplateEditor({ params }: { params: Promise<{ id:
         sub={t ? `Used by ${t.events} event${t.events === 1 ? "" : "s"}${t.isDefault ? " (the default)" : ""} · updated ${dateShort(t.updatedAt)}. Saving updates those tickets straight away, including ones already sold.` : "Start from a preset, then make it yours. Saved templates can be picked per event."} />
       <OpForm op="events:template.save" path={t ? `/events/templates/${t.id}` : undefined} redirectTo={t ? undefined : "/events/templates/{id}"} className="panel prox">
         {t && <input type="hidden" name="id" value={t.id} />}
-        <TemplateFields initial={t ? t.design : { ...DEFAULT_TEMPLATE, name: "New template" }} qr={await sampleQr()} events={samples} isNew={isNew} />
+        <TemplateFields initial={t ? t.design : { ...DEFAULT_TEMPLATE, name: "New template" }} qr={await sampleQr()} qrMatrix={sampleMatrix()} events={samples} isNew={isNew} />
         <div className="row">
           {!t?.isDefault && <label className="row small"><input type="checkbox" name="makeDefault" /> Make this the default for events without their own template</label>}
           <Submit pendingText="Saving…">{t ? "Save template" : "Create template"}</Submit>

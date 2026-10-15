@@ -37,7 +37,7 @@ export default async function Templates() {
       <div className="tpl-grid">
         {r.data.templates.map((t) => (
           <article key={t.id} className="card prox tpl-card" id={t.id}>
-            <Link href={`/events/templates/${t.id}`} className="tpl-thumb" aria-label={`Edit ${t.name}`} dangerouslySetInnerHTML={{ __html: ticketSvg(t.design, SAMPLE_DATA, qr, { title: `${t.name} preview` }) }} />
+            <Link href={`/events/templates/${t.id}`} className="tpl-thumb" aria-label={`Edit ${t.name}`} dangerouslySetInnerHTML={{ __html: ticketSvg(t.design, SAMPLE_DATA, qr, { title: `${t.name} preview`, art: (id) => `/files/events/${id}` }) }} />
             <div className="spread">
               <div><b>{t.name}</b> <span className="dim small">· updated {dateShort(t.updatedAt)}</span></div>
               <div className="row">
