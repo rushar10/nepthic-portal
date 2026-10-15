@@ -78,3 +78,21 @@
 .stock-cell.low input { border-color: color-mix(in oklab, var(--warn) 70%, var(--line-input)); }
 .stock-cell.out input { border-color: color-mix(in oklab, var(--bad) 70%, var(--line-input)); }
 .ship-row { align-items: end; }
+
+/* Ticket templates */
+.tpl-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
+.tpl-card { display: grid; gap: 12px; align-content: start; }
+.tpl-thumb { display: grid; place-items: center; min-height: 220px; padding: 14px; border-radius: 14px; background: var(--surface-2); }
+.tpl-thumb svg { max-width: 100%; max-height: 260px; width: auto; height: auto; }
+.tpl-editor { display: grid; gap: 24px; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start; }
+@media (max-width: 1100px) { .tpl-editor { grid-template-columns: 1fr; } }
+.tpl-preview { position: sticky; top: 90px; display: grid; gap: 10px; }
+@media (max-width: 1100px) { .tpl-preview { position: static; } }
+.tpl-stage { display: grid; place-items: center; padding: 20px; border-radius: 18px; background: repeating-conic-gradient(var(--surface-2) 0 25%, var(--surface) 0 50%) 0 0 / 22px 22px; }
+.tpl-stage svg { max-width: 100%; max-height: 560px; width: auto; height: auto; filter: drop-shadow(0 16px 36px rgb(0 0 0 / .35)); }
+.tpl-warn { color: var(--warn); font-weight: 600; }
+.tpl-fields { display: grid; gap: 16px; }
+.tpl-presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.tpl-presets .chip { border: 1.5px solid; border-radius: 999px; padding: 7px 14px; font: 600 13px var(--f-body); cursor: pointer; }
+.tpl-colour input[type="color"] { width: 46px; min-width: 46px; height: 44px; padding: 3px; border-radius: 12px; cursor: pointer; }
+.tpl-check { display: flex; flex-wrap: wrap; gap: 8px 18px; border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px 12px; margin: 0; }

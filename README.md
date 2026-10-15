@@ -20,6 +20,7 @@
   - dashboard, events with ticket types & capacity, and attendees
   - refund approvals, check-in stats, customers
   - sales & payments, scanner staff, settings
+  - **ticket templates**: design how tickets look (layout, colours, pattern, wording, which details show, fine print) with a live preview, then pick one per event or set a default
 - **Clothing:** the section and its screens (products, inventory, orders, customers, discounts) are ready. It says "not connected" until the Clothing site adds the admin API ([../docs/admin-api.md](../docs/admin-api.md)).
 - **Scanner** at `/scan`: the Events door app. It uses the camera, works offline with a sync queue, and gives sound and vibration feedback. Door staff can open only this page.
 - **View live site** opens a customer site with an admin preview bar that only you see, with "Edit this product / event" shortcuts.

@@ -1,12 +1,14 @@
 import { Submit } from "@/ui/Forms";
 import { OpForm } from "@/components/OpForm";
 
-type E = { id: string; name: string; slug: string; description: string; venue: string; address: string; city: string; startsAt: string; ageRestriction: string; hue: number; status: "DRAFT" | "PUBLISHED" | "CANCELLED" };
+export type TemplateOption = { id: string; name: string; isDefault: boolean };
+type E = { ticketTemplateId?: string | null; id: string; name: string; slug: string; description: string; venue: string; address: string; city: string; startsAt: string; ageRestriction: string; hue: number; status: "DRAFT" | "PUBLISHED" | "CANCELLED" };
 
 /* Event times are entered and shown in Brisbane time (UTC+10, no daylight saving). */
 const toLocalInput = (iso: string) => new Date(new Date(iso).getTime() + 10 * 3600e3).toISOString().slice(0, 16);
 
-export function EventForm({ event, confirmed }: { event?: E; confirmed: boolean }) {
+export function EventForm({ event, confirmed, templates = [] }: { event?: E; confirmed: boolean; templates?: TemplateOption[] }) {
+  const def = templates.find((t) => t.isDefault);
   return (
     <OpForm op="events:event.save" path={event ? `/events/events/${event.id}` : "/events/events"} redirectTo={event ? undefined : "/events/events/{id}?created=1"}
       className="panel prox" confirm={event ? "needed only to cancel the event" : undefined} confirmed={confirmed}>
@@ -26,6 +28,14 @@ export function EventForm({ event, confirmed }: { event?: E; confirmed: boolean 
         <label className="f">Entry<input type="text" name="ageRestriction" defaultValue={event?.ageRestriction ?? "18+"} /></label>
         <label className="f full">Description<textarea name="description" defaultValue={event?.description} /></label>
         <label className="f">Poster colour (0–359, used without a cover image)<input type="number" name="hue" min={0} max={359} defaultValue={event?.hue ?? 265} /></label>
+        {templates.length > 0 && (
+          <label className="f">Ticket design (<a href="/events/templates" target="_blank" rel="noopener">templates</a>)
+            <select name="ticketTemplateId" defaultValue={event?.ticketTemplateId ?? ""}>
+              <option value="">Default{def ? ` (${def.name})` : ""}</option>
+              {templates.filter((t) => !t.isDefault).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </label>
+        )}
         <label className="f">Cover image<input type="file" name="cover" accept="image/jpeg,image/png,image/webp" /></label>
         <label className="f full">Add gallery photos<input type="file" name="gallery" accept="image/jpeg,image/png,image/webp" multiple /></label>
       </div>

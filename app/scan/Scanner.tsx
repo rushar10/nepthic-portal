@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import jsQR from "jsqr";
 import type { ScanResult } from "./actions";
 import { Icon } from "@/ui/Icons";
@@ -13,7 +14,8 @@ const mKey = (id: string) => `nepthic.scan.manifest.${id}`;
 const qKey = (id: string) => `nepthic.scan.queue.${id}`;
 const load = <T,>(k: string, d: T): T => { try { return JSON.parse(localStorage.getItem(k) ?? "null") ?? d; } catch { return d; } };
 const save = (k: string, v: unknown) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage full */ } };
-const now = () => new Date().toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+// Venue time (Brisbane), the same clock the Events site uses for check-in times.
+const now = () => new Date().toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "Australia/Brisbane" });
 
 /* Door scanner, mobile first:
    - full-screen camera with a big green/amber/red result, sound and vibration
@@ -208,8 +210,8 @@ export function Scanner({ eventId, eventName, issued, admitted: initialAdmitted 
           <div className="spread"><b>{eventName}</b><span className="pill info">{admitted} / {issued} in</span></div>
           <div className="row">{status}<span className="small dim">{listAt ? `Offline list from ${listAt}` : "Downloading offline list…"}</span></div>
 
-          {(camera === "on" || camera === "starting") && (
-            <div className="scan-full">
+          {(camera === "on" || camera === "starting") && createPortal(
+            <div className="scan-full" role="dialog" aria-modal="true" aria-label="Camera scanner">
               <div style={{ position: "relative", minHeight: 0 }}>
                 <video ref={videoRef} playsInline muted />
                 <div className="frame" aria-hidden="true" />
@@ -226,7 +228,8 @@ export function Scanner({ eventId, eventName, issued, admitted: initialAdmitted 
                   <button className="btn" onClick={stop}>Done</button>
                 </span>
               </div>
-            </div>
+            </div>,
+            document.body,
           )}
 
           {camera !== "on" && camera !== "starting" && (

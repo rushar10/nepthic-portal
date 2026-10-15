@@ -8,13 +8,13 @@ import { Submit } from "@/ui/Forms";
 import { OpForm } from "@/components/OpForm";
 import { SectionHead } from "@/components/Section";
 import { SiteProblem } from "@/components/SiteProblem";
-import { EventForm } from "../EventForm";
+import { EventForm, type TemplateOption } from "../EventForm";
 
 export const metadata = { title: "Event" };
 
 type T = { id: string; name: string; priceCents: number; capacity: number; sold: number };
 type D = {
-  event: { id: string; slug: string; name: string; description: string; venue: string; address: string; city: string; startsAt: string; ageRestriction: string; hue: number; status: "DRAFT" | "PUBLISHED" | "CANCELLED"; galleryIds: string[]; ticketTypes: T[] };
+  event: { id: string; slug: string; name: string; description: string; venue: string; address: string; city: string; startsAt: string; ageRestriction: string; hue: number; ticketTemplateId: string | null; status: "DRAFT" | "PUBLISHED" | "CANCELLED"; galleryIds: string[]; ticketTypes: T[] };
   attendees: { id: string; code: string; holderName: string; status: string; checkedInAt: string | null; ticketType: { name: string; priceCents: number }; ticketOrder: { buyerEmail: string } }[];
 };
 
@@ -25,6 +25,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
   if (!r.ok) return <><Link className="btn btn-ghost btn-sm" href="/events/events" style={{ justifySelf: "start" }}>← Events</Link><SiteProblem site="events" r={r} /></>;
   const { event: e, attendees } = r.data;
   const manage = can(a, "events", "manage");
+  const tpl = manage ? await callSite<{ templates: TemplateOption[] }>(a, "events", "templates.list", {}, { level: "manage" }) : null;
   const confirmed = recentlyConfirmed(a);
   const path = `/events/events/${e.id}`;
   const used = attendees.filter((t) => t.status === "USED").length;
@@ -69,7 +70,7 @@ export default async function EventDetail({ params, searchParams }: { params: Pr
         </div>
       </section>
 
-      {manage && <EventForm event={e} confirmed={confirmed} />}
+      {manage && <EventForm event={e} confirmed={confirmed} templates={tpl?.ok ? tpl.data.templates : []} />}
 
       {e.galleryIds.length > 0 && (
         <section className="panel prox">

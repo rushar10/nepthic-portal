@@ -48,6 +48,7 @@ export function navFor(a: Who, counts: Counts): Record<Section, NavItem[]> {
       { href: "/events/checkin", label: "Check-in", icon: "scan" },
       { href: "/events/customers", label: "Customers", icon: "users" },
       { href: "/events/payments", label: "Sales & payments", icon: "card", level: "manage", group: "admin" },
+      { href: "/events/templates", label: "Ticket templates", icon: "ticket", level: "manage", group: "admin" },
       { href: "/events/door-staff", label: "Scanner staff", icon: "key", level: "manage", group: "admin" },
       { href: "/events/settings", label: "Settings", icon: "cog", level: "manage", group: "admin" },
     ]),
